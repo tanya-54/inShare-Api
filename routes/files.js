@@ -67,20 +67,92 @@ router.post('/' ,(req ,res)=>{
     // response -->link
 })
 
-router.post('/send' , async (req,res)=>{
-    const{ uuid ,emailTo,emailFrom} =req.body ;
-    if(!uuid || !emailTo ||emailFrom){
-        return res.status(422).send({error: 'All fields are required'});
-    }
-    // get data from database
-    const file = await File.findOne({uuid:uuid});
-    if(file.sender){
-        return res.status(422).send({error: 'email already sent!'});
+router.post('/send', async (req, res) => {
+    const { uuid, emailTo, emailFrom } = req.body;
+
+    // Check for required fields
+    if (!uuid || !emailTo || !emailFrom) {
+        return res.status(422).send({ error: 'All fields are required' });
     }
 
-    file.sender = emailFrom ;
-    file.receiver = emailTo;
-    const response = await file.save();
-})
+    try {
+        // Get data from database
+        const file = await File.findOne({ uuid: uuid });
+
+        // Check if file exists
+        if (!file) {
+            return res.status(404).send({ error: 'File not found' });
+        }
+        console.log('File found:', file);
+
+        // Check if the email has already been sent
+        if (file.sender) {
+            console.log('Email already sent:', file.sender);
+            return res.status(422).send({ error: 'Email already sent!' });
+        }
+
+        // Update file with sender and receiver email
+        file.sender = emailFrom;
+        file.receiver = emailTo;
+        const response = await file.save();
+        console.log('File updated:', file);
+
+        // Send email
+        const sendMail = require('../services/emailService');
+        sendMail({
+            from: emailFrom,
+            to: emailTo,
+            subject: 'inShare fileSharing',
+            text: `${emailFrom} shared a file with you`,
+            html: require('../services/emailTemplate')({
+                emailFrom: emailFrom,
+                downloadLink: `${process.env.APP_BASE_URL}/files/${file.uuid}?source=email`,
+                size: parseInt(file.size / 1000) + ' KB',
+                expires: '24 hours'
+            })
+        });
+
+        res.status(200).send({ message: 'Email sent successfully' });
+
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).send({ error: 'Internal Server Error' });
+    }
+});
+
+
+// router.post('/send' , async (req,res)=>{
+
+//     const{ uuid ,emailTo,emailFrom} =req.body ;
+//     if(!uuid || !emailTo || !emailFrom){
+//         return res.status(422).send({error: 'All fields are required'});
+//     }
+//     // get data from database
+//     const file = await File.findOne({uuid:uuid});
+//     if(file.sender){
+//         return res.status(422).send({error: 'email already sent!'});
+//     }
+
+//     file.sender = emailFrom ;
+//     file.receiver = emailTo;
+//     const response = await file.save();
+
+//     const sendMail= require('../services/emailService');
+//     sendMail({
+//         from : emailFrom,
+//         to:emailTo,
+//         subject:`inShare fileSharing`,
+//         text:`${emailFrom} shared a file with you`,
+//         html: require('../services/emailTemplate')({
+//             emailFrom:emailFrom,
+//             downloadLink: `${process.env.APP_BASE_URL}/files/${file.uuid}?source=email` ,
+//             size: parseInt(file.size/1000) + ' KB',
+//             expires: '24 hours'
+//         })
+
+//     })
+
+
+// })
 
 module.exports = router;
