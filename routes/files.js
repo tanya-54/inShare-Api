@@ -22,9 +22,8 @@ let upload = multer({
 }).single('myfile');
 
 
-
-
 router.post('/' ,(req ,res)=>{
+    console.log('Request body:', req.body);  
 
     // store file
     upload(req ,res ,async (err) =>{
@@ -69,6 +68,8 @@ router.post('/' ,(req ,res)=>{
 
 router.post('/send', async (req, res) => {
     const { uuid, emailTo, emailFrom } = req.body;
+
+    console.log('UUID in request body:', req.body.uuid);
 
     // Check for required fields
     if (!uuid || !emailTo || !emailFrom) {
