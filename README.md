@@ -4,7 +4,7 @@ This is a Node.js-based file-sharing API that allows users to upload files and g
 
 ## Features
 - **File Upload:** Upload files of various types.
-- **Temporary Download Links:** Generate download links that expire after a set time period (e.g., 24 hours).
+- **Temporary Download Links:** Generate download links that expire after a set time period (i.e., 24 hours).
 - **Secure Storage:** Store files securely on the server with options for file expiration.
 
 ## Technologies Used
